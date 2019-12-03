@@ -43,7 +43,7 @@ class PipelineUtilities implements Serializable {
         bashScript("cd ${service_location} && ./package.sh -b ${env.GIT_BRANCH} -c ${gitHash}")
     }
 
-    def createLegacyPackage(env, service_prefix) {
+    def createLegacyPackage(env, service_location) {
         steps.echo "Create Legacy Package"
         def files = findFiles(glob: "${service_location}/config/qa.properties")
         exists = files.length > 0 && files[0].length > 0
