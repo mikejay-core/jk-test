@@ -52,16 +52,17 @@ class PipelineUtilities implements Serializable {
             REPLACE_FILE = "config/qa.properties"
         }
         bashScript("cd auth-service && ./package.sh -b ${env.GIT_BRANCH} -c ${gitHash} -r ${REPLACE_FILE}")
+        env.gitHash = gitHash
     }
 
     def buildDockerImage(env, service_location) {
         steps.echo "Build Docker Image"
         def service_prefix = service_location.split('-')[0]
-        def dockerTag = env.GIT_BRANCH + "-" + gitHash
+        def dockerTag = env.GIT_BRANCH + "-" + env.gitHash
         steps.echo "Docker tag = |${dockerTag}|"
         bashScript('$(aws ecr get-login --no-include-email --region eu-west-1)')
         def escapedBranchName = env.GIT_BRANCH.replaceAll("_", "-")
-        def files = steps.findFiles(glob: "${service_location}/build/distributions/nexmo-${service_prefix}_*+" + escapedBranchName + '+' + gitHash + '-1_all.deb')
+        def files = steps.findFiles(glob: "${service_location}/build/distributions/nexmo-${service_prefix}_*+" + escapedBranchName + '+' + env.gitHash + '-1_all.deb')
         def localPath = ""
         if (files.length > 0) {
             //set some variable to indicate the file to load
