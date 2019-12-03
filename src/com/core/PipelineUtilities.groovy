@@ -109,6 +109,7 @@ class PipelineUtilities implements Serializable {
     }
 
     def waitForNPEEnv(env, npe_key, npe_user) {
+        steps.echo "NPE KEY  ${npe_key}"
         int attempts = 0
         while(attempts < 40){
             Object response = steps.readJSON text: bashScriptReturn("curl -ks \"https://${npe_user}:${npe_key}@api.app.npe/envs/${npe.name}/status\"").trim()
