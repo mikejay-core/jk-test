@@ -51,7 +51,7 @@ class PipelineUtilities implements Serializable {
         if (exists) {
             REPLACE_FILE = "config/qa.properties"
         }
-        sh "cd auth-service && ./package.sh -b ${env.GIT_BRANCH} -c ${gitHash} -r ${REPLACE_FILE}"
+        bashScript("cd auth-service && ./package.sh -b ${env.GIT_BRANCH} -c ${gitHash} -r ${REPLACE_FILE}")
     }
 
     def buildDockerImage(env, service_location) {
