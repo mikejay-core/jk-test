@@ -94,14 +94,23 @@ class PipelineUtilities implements Serializable {
 
     def retrieveConfiguration(env, service_location) {
         def npePreset = service_location.split('-')[0]
-        npe.params = env.readJSON text: bashScriptReturn("curl -ks \"https://api.app.npe/presets/${npePreset}/default-params\"").trim()
+        npe.params = steps.readJSON text: bashScriptReturn("curl -ks \"https://api.app.npe/presets/${npePreset}/default-params\"").trim()
         npe.params.param["env.puppet_branch"] = puppetBranch
         npe.params.param["metaconf.docker_tag"] = dockerTag
         npe.params.param["metaconf.auth_branch"] = env.GIT_BRANCH
         npe.params.param["env.core_config_db_db_url"] = "jdbc:mysql://mysql-db/config"
     }
 
-    
+    def buildNPE(env) {
+
+        Object responseJSON = steps.readJSON text: bashScriptReturn("curl -ks -H \"Content-Type: application/json\" -d '${groovy.json.JsonOutput.toJson(npe.params)}' -X POST \"https://${npe_user}:${npe_key}@api.app.npe/envs\"").trim()
+        env.withCredentials([usernamePassword(credentialsId: 'NPEAPI', passwordVariable: 'npe_key', usernameVariable: 'npe_user')]) {
+            npe.name = responseJSON.data[0].name
+        }
+        steps.echo "NPE Name: ${npe.name}"
+    }
+
+
 
 
 }
