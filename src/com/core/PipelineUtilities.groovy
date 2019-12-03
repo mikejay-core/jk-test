@@ -1,4 +1,6 @@
 
+package com.core
+
 class PipelineUtilities implements Serializable {
     def steps
 
