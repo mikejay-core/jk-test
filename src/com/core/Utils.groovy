@@ -1,5 +1,3 @@
-//src/com/core/libs/Utils.groovy
-
 package com.core.libs
 
 def bashScript(script) {
