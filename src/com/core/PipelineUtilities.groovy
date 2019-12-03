@@ -101,15 +101,27 @@ class PipelineUtilities implements Serializable {
         npe.params.param["env.core_config_db_db_url"] = "jdbc:mysql://mysql-db/config"
     }
 
-    def buildNPE(env) {
+    def buildNPE(env, npe_key, npe_user) {
 
-        Object responseJSON = steps.readJSON text: bashScriptReturn("curl -ks -H \"Content-Type: application/json\" -d '${groovy.json.JsonOutput.toJson(npe.params)}' -X POST \"https://${npe_user}:${npe_key}@api.app.npe/envs\"").trim()
-        env.withCredentials([usernamePassword(credentialsId: 'NPEAPI', passwordVariable: 'npe_key', usernameVariable: 'npe_user')]) {
-            npe.name = responseJSON.data[0].name
-        }
+        Object response = steps.readJSON text: bashScriptReturn("curl -ks -H \"Content-Type: application/json\" -d '${groovy.json.JsonOutput.toJson(npe.params)}' -X POST \"https://${npe_user}:${npe_key}@api.app.npe/envs\"").trim()
+        npe.name = response.data[0].name
         steps.echo "NPE Name: ${npe.name}"
     }
 
+    def waitForNPEEnv(env, npe_key, npe_user) {
+        int attempts = 0
+        while(attempts < 40){
+            Object response = steps.readJSON text: bashScriptReturn("curl -ks \"https://${npe_user}:${npe_key}@api.app.npe/envs/${npe.name}/status\"").trim()
+            npe.name = response.data[0].name
+            if (response.data.available[0]) {
+                return true
+            } else {
+                sleep time: 30, unit: 'SECONDS'
+                return false
+            }
+            attempts++
+        }
+    }
 
 
 
