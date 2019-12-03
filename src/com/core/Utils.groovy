@@ -1,13 +1,18 @@
 package com.core
 
 
-def bashScript(script) {
-    sh "echo IN BUILD SCRIPT"
-    sh "${script}"
-}   
+class Utils implements Serializable {
+    def steps
 
-def bashScriptReturn(script) {
-    return sh(returnStdout: true, script:"${script}")
+    Utils(steps) {this.steps = steps}
+
+    def bashScript(script) {
+        steps.sh "echo IN BUILD SCRIPT"
+        steps.sh "${script}"
+    }   
+
+    def bashScriptReturn(script) {
+        return steps.sh(returnStdout: true, script:"${script}")
+    }
 }
 
-return this
