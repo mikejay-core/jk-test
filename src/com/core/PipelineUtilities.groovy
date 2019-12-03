@@ -33,7 +33,7 @@ class PipelineUtilities implements Serializable {
 
     def createPackage(env) {
         steps.echo "Create Package"
-        def gitHash = utils.bashScriptReturn("git rev-parse --short ${GIT_COMMIT}").trim()
+        def gitHash = bashScriptReturn("git rev-parse --short ${GIT_COMMIT}").trim()
         bashScript("cd ips-dropwizard && ./package.sh -b ${env.GIT_BRANCH} -c ${gitHash}")
     }
 
