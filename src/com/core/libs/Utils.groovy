@@ -3,6 +3,7 @@
 package com.core.libs
 
 def bashScript(script) {
+    sh("echo IN BUILD SCRIPT")
     sh "${script}"
 }
 
