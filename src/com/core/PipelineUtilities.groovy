@@ -31,19 +31,20 @@ class PipelineUtilities implements Serializable {
         return bashScriptReturn("git log -n 1 --pretty=format:%s ${env.GIT_COMMIT}")
     }
 
-    def createPackage(env, service_prefix) {
+    def createPackage(env, service_location) {
         steps.echo "Create Package"
         def gitHash = bashScriptReturn("git rev-parse --short ${env.GIT_COMMIT}").trim()
-        bashScript("cd ${service_prefix}-dropwizard && ./package.sh -b ${env.GIT_BRANCH} -c ${gitHash}")
+        bashScript("cd ${service_location} && ./package.sh -b ${env.GIT_BRANCH} -c ${gitHash}")
     }
 
-    def buildDockerImage(env, service_prefix) {
+    def buildDockerImage(env, service_location) {
         steps.echo "Build Docker Image"
+        def service_prefix = service_location.split('-')[0]
         def dockerTag = env.GIT_BRANCH + "-" + gitHash
         steps.echo "Docker tag = |${dockerTag}|"
         bashScript('$(aws ecr get-login --no-include-email --region eu-west-1)')
         def escapedBranchName = env.GIT_BRANCH.replaceAll("_", "-")
-        def files = findFiles(glob: "${service_prefix}-dropwizard/build/distributions/nexmo-${service_prefix}_*+" + escapedBranchName + '+' + gitHash + '-1_all.deb')
+        def files = findFiles(glob: "${service_location}/build/distributions/nexmo-${service_prefix}_*+" + escapedBranchName + '+' + gitHash + '-1_all.deb')
         def localPath = ""
         if (files.length > 0) {
             //set some variable to indicate the file to load
