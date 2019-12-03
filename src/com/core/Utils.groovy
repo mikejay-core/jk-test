@@ -7,12 +7,12 @@ class Utils implements Serializable {
     Utils(steps) {this.steps = steps}
 
     def bashScript(script) {
-        sh("echo IN BUILD SCRIPT")
-        sh "${script}"
+        steps.sh "echo IN BUILD SCRIPT"
+        steps.sh "${script}"
     }   
 
     def bashScriptReturn(script) {
-        return sh(returnStdout: true, script:"${script}")
+        return steps.sh(returnStdout: true, script:"${script}")
     }
 }
 
