@@ -102,6 +102,7 @@ class PipelineUtilities implements Serializable {
     }
 
     def buildNPE(env, npe_key, npe_user) {
+        steps.echo "NPE KEY  ${npe_key}"
 
         Object response = steps.readJSON text: bashScriptReturn("curl -ks -H \"Content-Type: application/json\" -d '${groovy.json.JsonOutput.toJson(npe.params)}' -X POST \"https://${npe_user}:${npe_key}@api.app.npe/envs\"").trim()
         npe.name = response.data[0].name
