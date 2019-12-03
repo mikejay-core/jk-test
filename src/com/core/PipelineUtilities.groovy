@@ -39,7 +39,9 @@ class PipelineUtilities implements Serializable {
     def String runIntegrationTests(env) {
         steps.echo "Run Integration Tests"
         bashScriptReturn("./gradlew integrationTest --info jacocoTestReportIntegration")
-        return bashScriptReturn("git log -n 1 --pretty=format:%s ${env.GIT_COMMIT}")
+        def something bashScriptReturn("git log -n 1 --pretty=format:%s ${env.GIT_COMMIT}")
+        steps.echo "RETURN ${something}"
+        return something
     }
 
     def createPackage(env, service_location) {
