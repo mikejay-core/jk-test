@@ -4,7 +4,7 @@ package com.core
 class PipelineUtilities implements Serializable {
     def steps
     String registryPrefix
-    String repo_name
+    String repoName
     String dockerTag = ""
 
     PipelineUtilities(steps, registryPrefix, repoName) {
