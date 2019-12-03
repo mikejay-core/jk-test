@@ -6,6 +6,7 @@ class PipelineUtilities implements Serializable {
     String registryPrefix
     String repoName
     String dockerTag = ""
+    boolean imageExists = false
 
     PipelineUtilities(steps, registryPrefix, repoName) {
         this.steps = steps
@@ -79,13 +80,19 @@ class PipelineUtilities implements Serializable {
         bashScript("docker build -f Dockerfile --no-cache --network=host --build-arg service_name=${service_prefix} --build-arg local_deb_path=${localPath} -t ${registryPrefix}/${repoName}:${dockerTag} .")
         steps.echo "Push image"
         bashScript("docker images")
+
+        try { 
+            bashScriptReturn("aws ecr describe-images --repository-name=${repoName} --image-ids=imageTag=${dockerTag}")
+            imageAlreadyExists = "true"
+        } catch (ImageNotFoundException inf) {
+            bashScript("docker push ${registryPrefix}/${repoName}:${dockerTag}")
+        }
         if(bashScriptReturn("aws ecr describe-images --repository-name=${repoName} --image-ids=imageTag=${dockerTag}") != 0) {
-            steps.echo("WITHIN PUSH CONDITION ")
             bashScript("docker push ${registryPrefix}/${repoName}:${dockerTag}")
         } else {
             steps.echo("WITHIN NON-PUSH CONDITION ")
             bashScript("Image Already Exists in ECR")
-            env.imageAlreadyExists = "true"
+            imageExists = true
         }
     }
 
