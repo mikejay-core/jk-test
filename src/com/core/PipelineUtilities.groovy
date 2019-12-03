@@ -24,9 +24,7 @@ class PipelineUtilities implements Serializable {
     }   
 
     def bashScriptReturn(script) {
-        def something = steps.sh(returnStdout: true, script:"${script}")
-        steps.echo "RETURN ${something}"
-        return something
+        return steps.sh(returnStdout: true, script:"${script}")
     }
 
     // ------------- -----------------
@@ -104,16 +102,13 @@ class PipelineUtilities implements Serializable {
     }
 
     def buildNPE(env, npe_key, npe_user) {
-        steps.echo "NPE KEY  ${npe_key}"
         String something = bashScriptReturn("curl -ks -H \"Content-Type: application/json\" -d '${groovy.json.JsonOutput.toJson(npe.params)}' -X POST \"https://${npe_user}:${npe_key}@api.app.npe/envs\"").trim()
-        steps.echo "THIS IS THE RESULT ${something}"
         Object response = steps.readJSON text: something
         npe.name = response.data[0].name
         steps.echo "NPE Name: ${npe.name}"
     }
 
     def waitForNPEEnv(env, npe_key, npe_user) {
-        steps.echo "NPE KEY  ${npe_key}"
         int attempts = 0
         while(attempts < 40){
             Object response = steps.readJSON text: bashScriptReturn("curl -ks \"https://${npe_user}:${npe_key}@api.app.npe/envs/${npe.name}/status\"").trim()
@@ -121,11 +116,40 @@ class PipelineUtilities implements Serializable {
             if (response.data.available[0]) {
                 return true
             } else {
-                sleep time: 30, unit: 'SECONDS'
+                sleep 30
                 return false
             }
             attempts++
         }
+    }
+
+    def runQATests(env, qa_branch) {
+        String target_branch = "master" //get_qatests_branch()
+        sleep time 240 // 2mins
+        steps.echo "Checkout QA Tests"
+        checkout([$class: 'GitSCM', branches: [[name: "${target_branch}"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', url: 'https://github.com/nexmoinc/qatests']]])
+        bashScript(getQAShellScript())
+    }
+
+
+    def getQAShellScript(){
+        return """
+                    set -e
+                    echo "Create python virtual env"
+                    pipenv install --ignore-pipfile
+                    pipenv install allure-pytest pytest-rerunfailures --skip-lock
+                    echo "Run tests"
+                    export QA_TEST_ENVIRONMENT=npe:core:${npe.name}:auth1 && export PYTHONPATH=\$PYTHONPATH:\$(pwd)
+                    pipenv run python -m pytest testcases/core_projects/auth -v -m "trusted and not skip and ${qa_test_set}" --junitxml=${WORKSPACE}/pytestresults.xml --alluredir=${WORKSPACE}/allure-results --reruns=${params.PYTEST_RERUNS}
+                    echo "Delete virtual env"
+                    pipenv --rm
+                """
+    }
+
+    def dropNpe() {
+        steps.echo "Deleting environment ${npe.name}"
+        def resp = bashScriptReturn("curl -ks -X DELETE \"https://${npe_user}:${npe_key}@api.app.npe/envs/${npe.name}\"")
+        steps.echo "${resp}"
     }
 
 
