@@ -101,5 +101,7 @@ class PipelineUtilities implements Serializable {
         npe.params.param["env.core_config_db_db_url"] = "jdbc:mysql://mysql-db/config"
     }
 
+    
+
 
 }
