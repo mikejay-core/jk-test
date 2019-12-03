@@ -45,7 +45,7 @@ class PipelineUtilities implements Serializable {
 
     def createLegacyPackage(env, service_location) {
         steps.echo "Create Legacy Package"
-        def files = findFiles(glob: "${service_location}/config/qa.properties")
+        def files = steps.findFiles(glob: "${service_location}/config/qa.properties")
         exists = files.length > 0 && files[0].length > 0
         REPLACE_FILE = ""
         if (exists) {
@@ -61,7 +61,7 @@ class PipelineUtilities implements Serializable {
         steps.echo "Docker tag = |${dockerTag}|"
         bashScript('$(aws ecr get-login --no-include-email --region eu-west-1)')
         def escapedBranchName = env.GIT_BRANCH.replaceAll("_", "-")
-        def files = findFiles(glob: "${service_location}/build/distributions/nexmo-${service_prefix}_*+" + escapedBranchName + '+' + gitHash + '-1_all.deb')
+        def files = steps.findFiles(glob: "${service_location}/build/distributions/nexmo-${service_prefix}_*+" + escapedBranchName + '+' + gitHash + '-1_all.deb')
         def localPath = ""
         if (files.length > 0) {
             //set some variable to indicate the file to load
