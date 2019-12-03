@@ -84,15 +84,8 @@ class PipelineUtilities implements Serializable {
         try { 
             bashScriptReturn("aws ecr describe-images --repository-name=${repoName} --image-ids=imageTag=${dockerTag}")
             imageAlreadyExists = "true"
-        } catch (ImageNotFoundException inf) {
+        } catch (Exception inf) {
             bashScript("docker push ${registryPrefix}/${repoName}:${dockerTag}")
-        }
-        if(bashScriptReturn("aws ecr describe-images --repository-name=${repoName} --image-ids=imageTag=${dockerTag}") != 0) {
-            bashScript("docker push ${registryPrefix}/${repoName}:${dockerTag}")
-        } else {
-            steps.echo("WITHIN NON-PUSH CONDITION ")
-            bashScript("Image Already Exists in ECR")
-            imageExists = true
         }
     }
 
