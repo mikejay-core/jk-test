@@ -31,25 +31,25 @@ class PipelineUtilities implements Serializable {
         return bashScriptReturn("git log -n 1 --pretty=format:%s ${env.GIT_COMMIT}")
     }
 
-    def createPackage(env) {
+    def createPackage(env, service_prefix) {
         steps.echo "Create Package"
         def gitHash = bashScriptReturn("git rev-parse --short ${env.GIT_COMMIT}").trim()
-        bashScript("cd ips-dropwizard && ./package.sh -b ${env.GIT_BRANCH} -c ${gitHash}")
+        bashScript("cd ${service_prefix}-dropwizard && ./package.sh -b ${env.GIT_BRANCH} -c ${gitHash}")
     }
 
-    def buildDockerImage(env) {
+    def buildDockerImage(env, service_prefix) {
         steps.echo "Build Docker Image"
         def dockerTag = env.GIT_BRANCH + "-" + gitHash
         steps.echo "Docker tag = |${dockerTag}|"
         bashScript('$(aws ecr get-login --no-include-email --region eu-west-1)')
         def escapedBranchName = env.GIT_BRANCH.replaceAll("_", "-")
-        def files = findFiles(glob: 'ips-dropwizard/build/distributions/nexmo-ips_*+' + escapedBranchName + '+' + gitHash + '-1_all.deb')
+        def files = findFiles(glob: "${service_prefix}-dropwizard/build/distributions/nexmo-${service_prefix}_*+" + escapedBranchName + '+' + gitHash + '-1_all.deb')
         def localPath = ""
         if (files.length > 0) {
             //set some variable to indicate the file to load
             localPath = files[0].path
         }
-        bashScript("docker build -f Dockerfile --no-cache --network=host --build-arg service_name=ips --build-arg local_deb_path=${localPath} -t ${RegistryPrefix}/${repo_name}:${dockerTag} .")
+        bashScript("docker build -f Dockerfile --no-cache --network=host --build-arg service_name=${service_prefix} --build-arg local_deb_path=${localPath} -t ${RegistryPrefix}/${repo_name}:${dockerTag} .")
         steps.echo "Push image"
         bashScript("docker images")
         if(bashScriptReturn("aws ecr describe-images --repository-name=${repo_name} --image-ids=imageTag=${dockerTag}") != 0) {
