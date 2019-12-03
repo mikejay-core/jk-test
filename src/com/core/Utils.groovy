@@ -6,7 +6,7 @@ def bashScript(script) {
     sh "${script}"
 }   
 
-def bashScriptReturn(script) {
+def String bashScriptReturn(script) {
     return sh(returnStdout: true, script:"${script}")
 }
 
