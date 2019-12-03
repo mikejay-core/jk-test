@@ -65,10 +65,11 @@ class PipelineUtilities implements Serializable {
     def buildDockerImage(env, service_location) {
         steps.echo "Build Docker Image"
         def service_prefix = service_location.split('-')[0]
-        this.dockerTag = env.GIT_BRANCH + "-" + env.gitHash
+        def escapedBranchName = env.GIT_BRANCH.replaceAll("_", "-")
+
+        dockerTag = escapedBranchName + "-" + env.gitHash
         steps.echo "Docker tag = |${dockerTag}|"
         bashScript('$(aws ecr get-login --no-include-email --region eu-west-1)')
-        def escapedBranchName = env.GIT_BRANCH.replaceAll("_", "-")
         def files = steps.findFiles(glob: "${service_location}/build/distributions/nexmo-${service_prefix}_*+" + escapedBranchName + '+' + env.gitHash + '-1_all.deb')
         def localPath = ""
         if (files.length > 0) {
@@ -79,8 +80,10 @@ class PipelineUtilities implements Serializable {
         steps.echo "Push image"
         bashScript("docker images")
         if(bashScriptReturn("aws ecr describe-images --repository-name=${repoName} --image-ids=imageTag=${dockerTag}") != 0) {
+            steps.echo("WITHIN PUSH CONDITION ")
             bashScript("docker push ${registryPrefix}/${repoName}:${dockerTag}")
         } else {
+            steps.echo("WITHIN NON-PUSH CONDITION ")
             bashScript("Image Already Exists in ECR")
             env.imageAlreadyExists = "true"
         }
