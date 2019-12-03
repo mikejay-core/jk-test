@@ -3,8 +3,15 @@ package com.core
 
 class PipelineUtilities implements Serializable {
     def steps
+    String registryPrefix
+    String repo_name
+    String dockerTag = ""
 
-    PipelineUtilities(steps) {this.steps = steps}
+    PipelineUtilities(steps, registryPrefix, repoName) {
+        this.steps = steps
+        this.registryPrefix = registryPrefix
+        this.repoName = repoName
+    }
 
     // ---------- general ------------
 
@@ -58,7 +65,7 @@ class PipelineUtilities implements Serializable {
     def buildDockerImage(env, service_location) {
         steps.echo "Build Docker Image"
         def service_prefix = service_location.split('-')[0]
-        def dockerTag = env.GIT_BRANCH + "-" + env.gitHash
+        this.dockerTag = env.GIT_BRANCH + "-" + env.gitHash
         steps.echo "Docker tag = |${dockerTag}|"
         bashScript('$(aws ecr get-login --no-include-email --region eu-west-1)')
         def escapedBranchName = env.GIT_BRANCH.replaceAll("_", "-")
@@ -68,15 +75,17 @@ class PipelineUtilities implements Serializable {
             //set some variable to indicate the file to load
             localPath = files[0].path
         }
-        bashScript("docker build -f Dockerfile --no-cache --network=host --build-arg service_name=${service_prefix} --build-arg local_deb_path=${localPath} -t ${RegistryPrefix}/${repo_name}:${dockerTag} .")
+        bashScript("docker build -f Dockerfile --no-cache --network=host --build-arg service_name=${service_prefix} --build-arg local_deb_path=${localPath} -t ${registryPrefix}/${repoName}:${dockerTag} .")
         steps.echo "Push image"
         bashScript("docker images")
-        if(bashScriptReturn("aws ecr describe-images --repository-name=${repo_name} --image-ids=imageTag=${dockerTag}") != 0) {
-            bashScript("docker push ${RegistryPrefix}/${repo_name}:${dockerTag}")
+        if(bashScriptReturn("aws ecr describe-images --repository-name=${repoName} --image-ids=imageTag=${dockerTag}") != 0) {
+            bashScript("docker push ${registryPrefix}/${repoName}:${dockerTag}")
         } else {
             bashScript("Image Already Exists in ECR")
             env.imageAlreadyExists = "true"
         }
     }
+
+    def retrieveConfiguration(env, )
 
 }
