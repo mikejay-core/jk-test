@@ -86,6 +86,5 @@ class PipelineUtilities implements Serializable {
         }
     }
 
-    def retrieveConfiguration(env, )
 
 }
