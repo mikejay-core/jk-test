@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 @Library('utils')
-import com.core.libs.utils
+import com.core.utils
 
 
 def call(env) {
