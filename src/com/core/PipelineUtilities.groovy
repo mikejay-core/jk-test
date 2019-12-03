@@ -3,9 +3,12 @@ package com.core
 
 class PipelineUtilities implements Serializable {
     def steps
+    def npe = [ params: [], name: '']
+
     String registryPrefix
     String repoName
     String dockerTag = ""
+    String puppetBranch = 'master'
     boolean imageExists = false
 
     PipelineUtilities(steps, registryPrefix, repoName) {
@@ -87,6 +90,15 @@ class PipelineUtilities implements Serializable {
         } catch (Exception inf) {
             bashScript("docker push ${registryPrefix}/${repoName}:${dockerTag}")
         }
+    }
+
+    def retrieveConfiguration(env, service_location) {
+        def npePreset = service_location.split('-')[0]
+        npe.params = env.readJSON text: bashScriptReturn("curl -ks \"https://api.app.npe/presets/${npePreset}/default-params\"").trim()
+        npe.params.param["env.puppet_branch"] = puppetBranch
+        npe.params.param["metaconf.docker_tag"] = dockerTag
+        npe.params.param["metaconf.auth_branch"] = env.GIT_BRANCH
+        npe.params.param["env.core_config_db_db_url"] = "jdbc:mysql://mysql-db/config"
     }
 
 
