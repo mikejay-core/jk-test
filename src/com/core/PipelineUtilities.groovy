@@ -33,8 +33,25 @@ class PipelineUtilities implements Serializable {
 
     def createPackage(env, service_location) {
         steps.echo "Create Package"
+        def service_prefix = service_location.split('-')[0]
         def gitHash = bashScriptReturn("git rev-parse --short ${env.GIT_COMMIT}").trim()
+
+        if(service_prefix == "auth"){
+            createLegacyPackage(env, service_location)
+            return
+        }
         bashScript("cd ${service_location} && ./package.sh -b ${env.GIT_BRANCH} -c ${gitHash}")
+    }
+
+    def createLegacyPackage(env, service_prefix) {
+        steps.echo "Create Legacy Package"
+        def files = findFiles(glob: "${service_location}/config/qa.properties")
+        exists = files.length > 0 && files[0].length > 0
+        REPLACE_FILE = ""
+        if (exists) {
+            REPLACE_FILE = "config/qa.properties"
+        }
+        sh "cd auth-service && ./package.sh -b ${env.GIT_BRANCH} -c ${gitHash} -r ${REPLACE_FILE}"
     }
 
     def buildDockerImage(env, service_location) {
