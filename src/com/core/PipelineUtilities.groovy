@@ -107,7 +107,6 @@ class PipelineUtilities implements Serializable {
         int attempts = 0
         while(attempts < 40){
             Object response = this.context.readJSON text: runScript("curl -ks \"https://${npe_user}:${npe_key}@api.app.npe/envs/${npe_name}/status\"").trim()
-            npe.name = response.data[0].name
             this.context.echo "RESPONSE DATA ${response.data}"
 
             this.context.echo "RESPONSE DATA AVAILABLE${response.data[0].available}"
@@ -118,6 +117,8 @@ class PipelineUtilities implements Serializable {
                 this.context.echo "IN FALSE"
                 sleep 30
             }
+            this.context.echo "ATTEMPTS ${attempts}"
+
             attempts++
         }
     }
