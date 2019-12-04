@@ -112,7 +112,7 @@ class PipelineUtilities implements Serializable {
             } else {
                 sleep 30000
             }
-            this.context.echo "ATTEMPTS ${attempts}"
+            this.context.echo "ATTEMPTS ${attempts} : Available ${response.data[0].available}"
             attempts++
         }
     }
