@@ -66,7 +66,9 @@ class PipelineUtilities implements Serializable {
         }
         this.context.echo "Checkout shared repo"
         this.context.checkout([$class: 'GitSCM', branches: [[name: "master"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', url: 'https://github.com/nexmoinc/core-innovation']]])
-        Helper.runScript(this.context, "cd core-innovation")
+        Helper.runScript(this.context, "cd core-innovation")        
+        Helper.runScript(this.context, "ls -al")
+
         def absolutePath= "${this.context.WORKSPACE}/${localPath}"
 
         this.context.echo "Build Docker Image"
