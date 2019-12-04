@@ -21,7 +21,8 @@ class Helper implements Serializable {
                     pipenv install allure-pytest pytest-rerunfailures --skip-lock &&
                     echo "Run tests" &&
                     export QA_TEST_ENVIRONMENT=npe:core:${npe_name}:${npe_short_name} && export PYTHONPATH=\$PYTHONPATH:\$(pwd) &&
-                    pipenv run python -m pytest testcases/core_projects/auth -v -m "trusted and not skip and ${qa_test_set}" --junitxml=${context.WORKSPACE}/pytestresults.xml --alluredir=${context.WORKSPACE}/allure-results --reruns=1} &&
+                    mkdir -p ${context.WORKSPACE}/${allure-results}
+                    pipenv run python -m pytest testcases/core_projects/auth -v -m "trusted and not skip and ${qa_test_set}" --junitxml=${context.WORKSPACE}/pytestresults.xml --alluredir=${context.WORKSPACE}/allure-results --reruns=1 &&
                     echo "Delete virtual env" &&
                     pipenv --rm
                 """
