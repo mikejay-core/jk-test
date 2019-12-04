@@ -122,8 +122,8 @@ class Helper implements Serializable {
                         ])
     }
 
-    def slackSend(env, channel, color, status) {
-        this.context.slackSend channel: "${channel}", color: "${color}", message: "Build ${status} - job: ${env.JOB_NAME} build number: ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+    def slackSend(env, _channel, _color, _status) {
+        this.context.slackSend channel: "${_channel}", color: "${_color}", message: "Build ${_status} - job: ${env.JOB_NAME} build number: ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
     }
 
 }
