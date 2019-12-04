@@ -102,30 +102,23 @@ class PipelineUtilities implements Serializable {
         this.context.echo "NPE Name: ${npe.name}"
     }
 
-    def waitForNPEEnv(env, npe_key, npe_user, npe_name) {
+    def waitForNPEEnv(env, npe_key, npe_user) {
         this.context.echo "WAITING FOR NPE"
         int attempts = 0
         while(attempts < 40){
-            Object response = this.context.readJSON text: runScript("curl -ks \"https://${npe_user}:${npe_key}@api.app.npe/envs/${npe_name}/status\"").trim()
-            this.context.echo "RESPONSE DATA ${response.data}"
-
-            this.context.echo "RESPONSE DATA AVAILABLE${response.data[0].available}"
+            Object response = this.context.readJSON text: runScript("curl -ks \"https://${npe_user}:${npe_key}@api.app.npe/envs/${npe.name}/status\"").trim()
             if (response.data[0].available != false) { 
-                this.context.echo "IN TRUE"
                 return true
             } else {
-                this.context.echo "IN FALSE"
-                sleep 30
+                sleep 30000
             }
             this.context.echo "ATTEMPTS ${attempts}"
-
             attempts++
         }
     }
 
     def runQATests(env, qa_test_set) {
-        String target_branch = Helper.getQATestsBranch(env, this.context, qa_test_set) //TODO
-        sleep 240 // 2mins
+        String target_branch = "master" //Helper.getQATestsBranch(env, this.context, qa_test_set, username, password) //TODO
         this.context.echo "Checkout QA Tests"
         this.context.checkout([$class: 'GitSCM', branches: [[name: "${target_branch}"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', url: 'https://github.com/nexmoinc/qatests']]])
         runScript(getQAShellScript(qa_test_set))

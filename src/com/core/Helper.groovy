@@ -10,11 +10,11 @@ class Helper implements Serializable {
         return context.sh(returnStdout: true, script:"${script}")
     }
 
-    static def String getQATestsBranch(env, context, qa_tests_branch) {
+    static def String getQATestsBranch(env, context, qa_tests_branch, username, password) {
         node('master') {
             // helper function to find corresponding qatests branch to be used for testing dev branch
             def result = ""
-            context.withCredentials([usernamePassword(credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', passwordVariable: 'password', usernameVariable: 'username')]) {
+            context.withCredentials([usernamePassword(credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', passwordVariable: 'password', usernameVariable: 'username')]) { //TODO
                 script {
                     if (env.GIT_BRANCH.toLowerCase() == "dev" || env.GIT_BRANCH == "master") {
                         result = "master" // if we are on dev branch, always run tests from qatests master
