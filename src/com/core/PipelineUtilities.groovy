@@ -20,13 +20,13 @@ class PipelineUtilities implements Serializable {
 
     def String buildAndUnitTest(env) {
         this.context.echo "Build and Unit Test"
-        Helper.runScript(this.context, "./gradlew clean check jacocoTestReportUnit")
+        Helper.runScript(this.context, "./gradlew clean --no-daemon check jacocoTestReportUnit")
         return Helper.runScript(this.context, "git log -n 1 --pretty=format:%s ${env.GIT_COMMIT}")
     }
 
     def String runIntegrationTests(env) {
         this.context.echo "Run Integration Tests"
-        Helper.runScript(this.context, "./gradlew integrationTest --info jacocoTestReportIntegration")
+        Helper.runScript(this.context, "./gradlew integrationTest --no-daemon --info jacocoTestReportIntegration")
         Helper.runScript(this.context, "git log -n 1 --pretty=format:%s ${env.GIT_COMMIT}")
     }
 
