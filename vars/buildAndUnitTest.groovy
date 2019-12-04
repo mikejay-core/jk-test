@@ -1,9 +1,0 @@
-library('Utils')
-import com.core.Utils
-
-def call(env) {
-    echo "Build and unit test"
-    def utils = new com.core.Utils(this)
-    utils.bashScriptReturn "./gradlew clean check jacocoTestReportUnit"
-    return utils.bashScriptReturn("git log -n 1 --pretty=format:%s ${env.GIT_COMMIT}")
-}
