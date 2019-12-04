@@ -6,11 +6,11 @@ class Helper implements Serializable {
     
     Helper(context) {this.context = context}
 
-    Static def runScript(context, script) {
+    static def runScript(context, script) {
         return context.sh(returnStdout: true, script:"${script}")
     }
 
-    Static def String getQATestsBranch(env, context, qa_tests_branch) {
+    static def String getQATestsBranch(env, context, qa_tests_branch) {
         node('master') {
             // helper function to find corresponding qatests branch to be used for testing dev branch
             def result = ""
