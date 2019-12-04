@@ -11,10 +11,11 @@ class PipelineUtilities implements Serializable {
     String puppetBranch = "master"
     boolean imageExists = false
 
-    PipelineUtilities(context, registryPrefix, repoName) {
+    PipelineUtilities(context, registryPrefix, repoName, puppetBranch) {
         this.context = context
         this.registryPrefix = registryPrefix
         this.repoName = repoName
+        this.puppetBranch = puppetBranch
     }
 
     def String buildAndUnitTest(env) {
@@ -76,13 +77,14 @@ class PipelineUtilities implements Serializable {
         }
     }
 
-    def retrieveConfiguration(env, service_location) {
+    def retrieveConfiguration(env, service_location, instanceId) {
         def npePreset = service_location.split('-')[0]
         npe.params = this.context.readJSON text: Helper.runScript(this.context, "curl -ks \"https://api.app.npe/presets/${npePreset}/default-params\"").trim()
         npe.params.param["env.puppet_branch"] = puppetBranch
         npe.params.param["metaconf.docker_tag"] = dockerTag
-        npe.params.param["metaconf.auth_branch"] = env.GIT_BRANCH
-        npe.params.param["env.core_config_db_db_url"] = "jdbc:mysql://mysql-db/config"
+        npe.params.param["metaconf.project_name"] = repoName
+        npe.params.param["metaconf.project_branch"] = env.GIT_BRANCH
+        npe.params.param["metaconf.core_instance_id"] = instanceId
     }
 
     def buildNPE(env, npe_key, npe_user) {

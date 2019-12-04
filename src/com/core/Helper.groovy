@@ -15,14 +15,14 @@ class Helper implements Serializable {
 
     static def getQAShellScript(context, qa_test_set, npe_name, npe_short_name){
         return """\
-                    set -e 
-                    echo "Create python virtual env"
-                    pipenv install --ignore-pipfile
-                    pipenv install allure-pytest pytest-rerunfailures --skip-lock
-                    echo "Run tests"
-                    export QA_TEST_ENVIRONMENT=npe:core:${npe_name}:${npe_short_name} && export PYTHONPATH=\$PYTHONPATH:\$(pwd)
-                    pipenv run python -m pytest testcases/core_projects/auth -v -m "trusted and not skip and ${qa_test_set}" --junitxml=${context.WORKSPACE}/pytestresults.xml --alluredir=${context.WORKSPACE}/allure-results --reruns=1}
-                    echo "Delete virtual env"
+                    set -e && 
+                    echo "Create python virtual env" &&
+                    pipenv install --ignore-pipfile && 
+                    pipenv install allure-pytest pytest-rerunfailures --skip-lock &&
+                    echo "Run tests" &&
+                    export QA_TEST_ENVIRONMENT=npe:core:${npe_name}:${npe_short_name} && export PYTHONPATH=\$PYTHONPATH:\$(pwd) &&
+                    pipenv run python -m pytest testcases/core_projects/auth -v -m "trusted and not skip and ${qa_test_set}" --junitxml=${context.WORKSPACE}/pytestresults.xml --alluredir=${context.WORKSPACE}/allure-results --reruns=1} &&
+                    echo "Delete virtual env" &&
                     pipenv --rm
                 """
     }
@@ -107,9 +107,9 @@ class Helper implements Serializable {
 
     def publishQATestResults(env) {
         String cmd = """\
-                        set +e
-                        cp -r allure-report/history allure-results
-                        set -e
+                        set +e &&
+                        cp -r allure-report/history allure-results &&
+                        set -e &&
                     """
         this.context.junit 'pytestresults.xml'
         runScript(cmd)
