@@ -111,7 +111,6 @@ class Helper implements Serializable {
                         cp -r allure-report/history allure-results &&
                         set -e &&
                     """
-        this.context.junit 'pytestresults.xml'
         runScript(cmd)
         this.context.allure([
                                 includeProperties: false,
