@@ -111,22 +111,7 @@ class PipelineUtilities implements Serializable {
         String target_branch = "master" //Helper.getQATestsBranch(env, this.context, qa_test_set, username, password) //TODO
         this.context.echo "Checkout QA Tests"
         this.context.checkout([$class: 'GitSCM', branches: [[name: "${target_branch}"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', url: 'https://github.com/nexmoinc/qatests']]])
-        Helper.runScript(this.context, getQAShellScript(qa_test_set, npe_short_name))
-    }
-
-
-    def getQAShellScript(qa_test_set){
-        return """\
-                    set -e 
-                    echo "Create python virtual env"
-                    pipenv install --ignore-pipfile
-                    pipenv install allure-pytest pytest-rerunfailures --skip-lock
-                    echo "Run tests"
-                    export QA_TEST_ENVIRONMENT=npe:core:${npe.name}:auth1 && export PYTHONPATH=\$PYTHONPATH:\$(pwd)
-                    pipenv run python -m pytest testcases/core_projects/auth -v -m "trusted and not skip and ${qa_test_set}" --junitxml=${this.context.WORKSPACE}/pytestresults.xml --alluredir=${this.context.WORKSPACE}/allure-results --reruns=1}
-                    echo "Delete virtual env"
-                    pipenv --rm
-                """
+        Helper.runScript(this.context, Helper.getQAShellScript(this.context, qa_test_set, npe_short_name))
     }
 
     def dropNPE(env, npe_key, npe_user) {

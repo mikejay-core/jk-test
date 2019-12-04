@@ -7,7 +7,24 @@ class Helper implements Serializable {
     Helper(context) {this.context = context}
 
     static def runScript(context, script) {
-        return context.sh(returnStdout: true, script:"${script}")
+        context.echo "running script ${script}"
+        def result = context.sh(returnStdout: true, script:"${script}")
+        context.echo "result: ${result}"
+        return result
+    }
+
+    static def getQAShellScript(context, qa_test_set, npe_short_name){
+        return """\
+                    set -e 
+                    echo "Create python virtual env"
+                    pipenv install --ignore-pipfile
+                    pipenv install allure-pytest pytest-rerunfailures --skip-lock
+                    echo "Run tests"
+                    export QA_TEST_ENVIRONMENT=npe:core:${npe.name}:${npe_short_name} && export PYTHONPATH=\$PYTHONPATH:\$(pwd)
+                    pipenv run python -m pytest testcases/core_projects/auth -v -m "trusted and not skip and ${qa_test_set}" --junitxml=${context.WORKSPACE}/pytestresults.xml --alluredir=${context.WORKSPACE}/allure-results --reruns=1}
+                    echo "Delete virtual env"
+                    pipenv --rm
+                """
     }
 
     static def String getQATestsBranch(env, context, qa_tests_branch, username, password) {
@@ -52,7 +69,10 @@ class Helper implements Serializable {
     }
 
     def runScript(script) {
-        return this.context.sh(returnStdout: true, script:"${script}")
+        this.context.echo "running script ${script}"
+        def result = this.context.sh(returnStdout: true, script:"${script}")
+        this.context.echo "result: ${result}"
+        return result
     }
 
     def push_latest_tag(env, repositoryPrefix, repoName, dockerTag) {
