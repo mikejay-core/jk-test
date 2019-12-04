@@ -65,10 +65,10 @@ class PipelineUtilities implements Serializable {
             localPath = files[0].path
         }
         this.context.echo "Checkout shared repo"
-        this.context.checkout([$class: 'GitSCM', branches: [[name: "${target_branch}"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', url: 'https://github.com/nexmoinc/core-innovation']]])
+        this.context.checkout([$class: 'GitSCM', branches: [[name: "master"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', url: 'https://github.com/nexmoinc/core-innovation']]])
         Helper.runScript(this.context, "cd core-innovation")
         def absolutePath= "${this.context.WORKSPACE}/${localPath}"
-        
+
         this.context.echo "Build Docker Image"
         Helper.runScript(this.context, "docker build -f Dockerfile --no-cache --network=host --build-arg service_name=${service_prefix} --build-arg local_deb_path=${absolutePath} -t ${registryPrefix}/${repoName}:${dockerTag} .")
         this.context.echo "Push image"
