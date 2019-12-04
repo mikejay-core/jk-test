@@ -109,7 +109,7 @@ class Helper implements Serializable {
         String cmd = """\
                         set +e &&
                         cp -r allure-report/history allure-results &&
-                        set -e &&
+                        set -e 
                     """
         runScript(cmd)
         this.context.allure([
