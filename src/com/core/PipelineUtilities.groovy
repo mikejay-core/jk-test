@@ -111,11 +111,11 @@ class PipelineUtilities implements Serializable {
         }
     }
 
-    def runQATests(env, qa_test_set, npe_short_name) {
+    def runQATests(env, qa_test_set, npe_name, npe_short_name) {
         String target_branch = "master" //Helper.getQATestsBranch(env, this.context, qa_test_set, username, password) //TODO
         this.context.echo "Checkout QA Tests"
         this.context.checkout([$class: 'GitSCM', branches: [[name: "${target_branch}"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', url: 'https://github.com/nexmoinc/qatests']]])
-        Helper.runScript(this.context, Helper.getQAShellScript(this.context, qa_test_set, npe.name, npe_short_name))
+        Helper.runScript(this.context, Helper.getQAShellScript(this.context, qa_test_set, npe_name, npe_short_name))
     }
 
     def dropNPE(env, npe_key, npe_user) {
