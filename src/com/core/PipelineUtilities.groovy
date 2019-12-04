@@ -108,7 +108,8 @@ class PipelineUtilities implements Serializable {
         while(attempts < 40){
             Object response = this.context.readJSON text: runScript("curl -ks \"https://${npe_user}:${npe_key}@api.app.npe/envs/${npe.name}/status\"").trim()
             npe.name = response.data[0].name
-            if (!response.data[0].available) {
+            this.context.echo("RESPONSE DATA ${response.data[0].available}")
+            if (response.data[0].available) {
                 return true
             } else {
                 sleep 30
@@ -118,7 +119,7 @@ class PipelineUtilities implements Serializable {
     }
 
     def runQATests(env, qa_test_set) {
-        String target_branch = "master" //get_qatests_branch()
+        String target_branch = Helper.getQATestsBranch(env, this.context, qa_test_set) //TODO
         sleep 240 // 2mins
         this.context.echo "Checkout QA Tests"
         this.context.checkout([$class: 'GitSCM', branches: [[name: "${target_branch}"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', url: 'https://github.com/nexmoinc/qatests']]])
