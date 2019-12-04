@@ -85,6 +85,23 @@ class Helper implements Serializable {
                     reportTitles: 'Integration Test Coverage'])
     }
 
+    def publishQATestResults(env) {
+        String cmd = """
+                        set +e
+                        cp -r allure-report/history allure-results
+                        set -e
+                    """
+        this.context.junit 'pytestresults.xml'
+        runScript(cmd)
+        this.context.allure([
+                                includeProperties: false,
+                                jdk: '',
+                                properties: [],
+                                reportBuildPolicy: 'ALWAYS',
+                                results: [[path: 'allure-results']]
+                        ])
+    }
+
     def slackSend(env, channel, color, status) {
         this.context.slackSend channel: "${channel}", color: "${color}", message: "Build ${status} - job: ${env.JOB_NAME} build number: ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
     }
