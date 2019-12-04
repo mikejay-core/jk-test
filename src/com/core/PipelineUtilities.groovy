@@ -107,17 +107,17 @@ class PipelineUtilities implements Serializable {
         }
     }
 
-    def runQATests(env, qa_test_set) {
+    def runQATests(env, qa_test_set, npe_short_name) {
         String target_branch = "master" //Helper.getQATestsBranch(env, this.context, qa_test_set, username, password) //TODO
         this.context.echo "Checkout QA Tests"
         this.context.checkout([$class: 'GitSCM', branches: [[name: "${target_branch}"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', url: 'https://github.com/nexmoinc/qatests']]])
-        Helper.runScript(this.context, getQAShellScript(qa_test_set))
+        Helper.runScript(this.context, getQAShellScript(qa_test_set, npe_short_name))
     }
 
 
     def getQAShellScript(qa_test_set){
-        return """
-                    set -e
+        return """\
+                    set -e 
                     echo "Create python virtual env"
                     pipenv install --ignore-pipfile
                     pipenv install allure-pytest pytest-rerunfailures --skip-lock

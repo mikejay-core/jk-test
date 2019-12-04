@@ -86,7 +86,7 @@ class Helper implements Serializable {
     }
 
     def publishQATestResults(env) {
-        String cmd = """
+        String cmd = """\
                         set +e
                         cp -r allure-report/history allure-results
                         set -e
