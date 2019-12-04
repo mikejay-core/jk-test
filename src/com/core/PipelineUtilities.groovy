@@ -102,11 +102,11 @@ class PipelineUtilities implements Serializable {
         this.context.echo "NPE Name: ${npe.name}"
     }
 
-    def waitForNPEEnv(env, npe_key, npe_user) {
+    def waitForNPEEnv(env, npe_key, npe_user, npe_name) {
         this.context.echo "WAITING FOR NPE"
         int attempts = 0
         while(attempts < 40){
-            Object response = this.context.readJSON text: runScript("curl -ks \"https://${npe_user}:${npe_key}@api.app.npe/envs/${npe.name}/status\"").trim()
+            Object response = this.context.readJSON text: runScript("curl -ks \"https://${npe_user}:${npe_key}@api.app.npe/envs/${npe_name}/status\"").trim()
             npe.name = response.data[0].name
             this.context.echo "RESPONSE DATA ${response.data}"
 
