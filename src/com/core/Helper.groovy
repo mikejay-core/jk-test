@@ -106,15 +106,6 @@ class Helper implements Serializable {
     }
 
     def publishQATestResults(env) {
-        this.context.echo "LIST OUTSIDE "
-        runScript("ls")
-        this.context.echo "LIST INSIDE "
-        runScript("ls ./allure-report")
-        String cmd = """\
-                        set +e &&
-                        cp -r allure-report/history allure-results 
-                    """
-        runScript(cmd)
         this.context.allure([
                                 includeProperties: false,
                                 jdk: '',
