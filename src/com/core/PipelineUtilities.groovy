@@ -87,6 +87,7 @@ class PipelineUtilities implements Serializable {
         npe.params.param["metaconf.project_name"] = repoName
         npe.params.param["metaconf.project_branch"] = env.GIT_BRANCH
         npe.params.param["metaconf.core_instance_id"] = instanceId
+        npe.params.param["env.core_config_db_db_url"] = "jdbc:mysql://mysql-db/config"
     }
 
     def buildNPE(env, npe_key, npe_user) {
