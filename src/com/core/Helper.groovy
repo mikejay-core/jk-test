@@ -107,7 +107,7 @@ class Helper implements Serializable {
 
     def publishQATestResults(env) {
         this.context.echo "LIST OUTSIDE "
-        runScriptrunScript("ls")
+        runScript("ls")
         this.context.echo "LIST INSIDE "
         runScript("ls ./allure-report")
         String cmd = """\
