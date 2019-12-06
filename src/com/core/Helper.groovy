@@ -46,7 +46,7 @@ class Helper implements Serializable {
         runScript(context, "aws ecr batch-delete-image --repository-name ${repoName} --image-ids imageTag=${dockerTag}")
     }
 
-    static def runSonarScanner(context, branch) {
+    static def runSonarScanner(context) {
         def script = "/var/lib/jenkins/tools/hudson.plugins.sonar.SonarRunnerInstallation/sonar_scanner/bin/sonar-scanner " +
                     "-Dsonar.projectVersion=${context.GIT_COMMIT_SHORT} -Dsonar.branch.name=${context.GIT_BRANCH}"
         if(context.GIT_BRANCH != "master"){
