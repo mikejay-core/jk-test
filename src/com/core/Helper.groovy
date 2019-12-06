@@ -31,37 +31,35 @@ class Helper implements Serializable {
         this.context.echo "IN GET QA TESTS BRANCH"
         // helper function to find corresponding qatests branch to be used for testing dev branch
         def result = ""
-            script {
-                if (env.GIT_BRANCH.toLowerCase() == "dev" || env.GIT_BRANCH == "master") {
-                    result = "master" // if we are on dev branch, always run tests from qatests master
+        if (env.GIT_BRANCH.toLowerCase() == "dev" || env.GIT_BRANCH == "master") {
+            result = "master" // if we are on dev branch, always run tests from qatests master
+        } else {
+            if (params.QATESTS_BRANCH == "") {
+                def (branchPrefix, filter1, filter2, qaTestsTargetBranch) = ["", "", "", ""]
+                if (env.GIT_BRANCH =~ /^\w+(-|_)\d+/) {
+                    this.context.echo "dev branch has matched jira ticket name convention"
+                    branchPrefix = (env.GIT_BRANCH =~ /^\w+(-|_)\d+/)[0][0] // we have to use same regexp twice because we can't use match object in declarative pipelines because of serialization
+                    filter1 = branchPrefix
+                    filter2 = branchPrefix.contains('-') ? branchPrefix.replace('-', '_') : branchPrefix.replace('_', '-') // test branch can be CORE-xxxx or CORE_xxxx
                 } else {
-                    if (params.QATESTS_BRANCH == "") {
-                        def (branchPrefix, filter1, filter2, qaTestsTargetBranch) = ["", "", "", ""]
-                        if (env.GIT_BRANCH =~ /^\w+(-|_)\d+/) {
-                            this.context.echo "dev branch has matched jira ticket name convention"
-                            branchPrefix = (env.GIT_BRANCH =~ /^\w+(-|_)\d+/)[0][0] // we have to use same regexp twice because we can't use match object in declarative pipelines because of serialization
-                            filter1 = branchPrefix
-                            filter2 = branchPrefix.contains('-') ? branchPrefix.replace('-', '_') : branchPrefix.replace('_', '-') // test branch can be CORE-xxxx or CORE_xxxx
-                        } else {
-                            this.context.echo "dev branch has not matched jira ticket name convention"
-                            branchPrefix = env.GIT_BRANCH
-                            (filter1, filter2) = [branchPrefix, branchPrefix]
-                        }
-                        def branchQAHash = runScript("git ls-remote https://${username}:${password}@github.com/nexmoinc/qatests.git | grep \"$filter1\\|$filter2\" || echo 'switch to qatests master'").toString().trim()
-                        if (branchQAHash == "switch to qatests master") {
-                            this.context.echo "No corresponding qatests branch found -> using master"
-                            qaTestsTargetBranch = "master"
-                        } else {
-                            this.context.echo "found qatests branch ${branchQAHash}"
-                            qaTestsTargetBranch = branchQAHash.split()[1] // first element is hashcommit, second is branch name we need
-                        }
-                        result = qaTestsTargetBranch
-                    } else {
-                        this.context.echo "use provided parameter"
-                        result = params.QATESTS_BRANCH // use manually provided qatests branch
-                    }
+                    this.context.echo "dev branch has not matched jira ticket name convention"
+                    branchPrefix = env.GIT_BRANCH
+                    (filter1, filter2) = [branchPrefix, branchPrefix]
                 }
+                def branchQAHash = runScript("git ls-remote https://${username}:${password}@github.com/nexmoinc/qatests.git | grep \"$filter1\\|$filter2\" || echo 'switch to qatests master'").toString().trim()
+                if (branchQAHash == "switch to qatests master") {
+                    this.context.echo "No corresponding qatests branch found -> using master"
+                    qaTestsTargetBranch = "master"
+                } else {
+                    this.context.echo "found qatests branch ${branchQAHash}"
+                    qaTestsTargetBranch = branchQAHash.split()[1] // first element is hashcommit, second is branch name we need
+                }
+                result = qaTestsTargetBranch
+            } else {
+                this.context.echo "use provided parameter"
+                result = params.QATESTS_BRANCH // use manually provided qatests branch
             }
+        }
         return result
     }
 
