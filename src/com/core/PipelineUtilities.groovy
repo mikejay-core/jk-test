@@ -83,14 +83,12 @@ class PipelineUtilities implements Serializable {
     def retrieveConfiguration(env, npePreset, instanceId) {
         def projectName = repoName.split('-')[1]
         npe.params = this.context.readJSON text: Helper.runScript(this.context, "curl -ks \"https://api.app.npe/presets/${npePreset}/default-params\"").trim()
-        npe.params.with {
-            param["env.puppet_branch"] = puppetBranch
-            nparam["metaconf.docker_tag"] = dockerTag
-            param["metaconf.project_name"] = projectName
-            param["metaconf.project_branch"] = "master"
-            param["env.core_instance_id"] = instanceId
-            params.param["env.core_config_db_db_url"] = "jdbc:mysql://mysql-db/config"
-        }
+        npe.params.param["env.puppet_branch"] = puppetBranch
+        npe.params.param["metaconf.docker_tag"] = dockerTag
+        npe.params.param["metaconf.project_name"] = projectName
+        npe.params.param["metaconf.project_branch"] = "master"
+        npe.params.param["env.core_instance_id"] = instanceId
+        npe.params.param["env.core_config_db_db_url"] = "jdbc:mysql://mysql-db/config"
     }
 
     def buildNPE(env, npeKey, npeUser) {
