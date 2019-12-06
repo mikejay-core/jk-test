@@ -27,7 +27,8 @@ class Helper implements Serializable {
                 """
     }
 
-    static def String getQATestsBranch(env, username, password) {
+    def String getQATestsBranch(env, username, password) {
+        this.context.echo "IN GET QA TESTS BRANCH"
         // helper function to find corresponding qatests branch to be used for testing dev branch
         def result = ""
             script {
@@ -37,26 +38,26 @@ class Helper implements Serializable {
                     if (params.QATESTS_BRANCH == "") {
                         def (branchPrefix, filter1, filter2, qaTestsTargetBranch) = ["", "", "", ""]
                         if (env.GIT_BRANCH =~ /^\w+(-|_)\d+/) {
-                            context.echo "dev branch has matched jira ticket name convention"
+                            this.context.echo "dev branch has matched jira ticket name convention"
                             branchPrefix = (env.GIT_BRANCH =~ /^\w+(-|_)\d+/)[0][0] // we have to use same regexp twice because we can't use match object in declarative pipelines because of serialization
                             filter1 = branchPrefix
                             filter2 = branchPrefix.contains('-') ? branchPrefix.replace('-', '_') : branchPrefix.replace('_', '-') // test branch can be CORE-xxxx or CORE_xxxx
                         } else {
-                            context.echo "dev branch has not matched jira ticket name convention"
+                            this.context.echo "dev branch has not matched jira ticket name convention"
                             branchPrefix = env.GIT_BRANCH
                             (filter1, filter2) = [branchPrefix, branchPrefix]
                         }
-                        def branchQAHash = runScript(context, "git ls-remote https://${username}:${password}@github.com/nexmoinc/qatests.git | grep \"$filter1\\|$filter2\" || echo 'switch to qatests master'").toString().trim()
+                        def branchQAHash = runScript("git ls-remote https://${username}:${password}@github.com/nexmoinc/qatests.git | grep \"$filter1\\|$filter2\" || echo 'switch to qatests master'").toString().trim()
                         if (branchQAHash == "switch to qatests master") {
-                            context.echo "No corresponding qatests branch found -> using master"
+                            this.context.echo "No corresponding qatests branch found -> using master"
                             qaTestsTargetBranch = "master"
                         } else {
-                            context.echo "found qatests branch ${branchQAHash}"
+                            this.context.echo "found qatests branch ${branchQAHash}"
                             qaTestsTargetBranch = branchQAHash.split()[1] // first element is hashcommit, second is branch name we need
                         }
                         result = qaTestsTargetBranch
                     } else {
-                        context.echo "use provided parameter"
+                        this.context.echo "use provided parameter"
                         result = params.QATESTS_BRANCH // use manually provided qatests branch
                     }
                 }
