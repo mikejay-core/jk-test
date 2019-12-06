@@ -41,9 +41,9 @@ class Helper implements Serializable {
         runScript(context,'$(aws ecr get-login --no-include-email --region eu-west-1)')
     }
 
-    static def deleteImageFromECF(context) {
+    static def deleteImageFromECF(context, repoName, dockerTag) {
         logInToECR(context)
-        runScript(context, "aws ecr batch-delete-image --repository-name ${repo_name} --image-ids imageTag=${dockerTag}")
+        runScript(context, "aws ecr batch-delete-image --repository-name ${repoName} --image-ids imageTag=${dockerTag}")
     }
 
     def String getQATestsBranch(env, testBranch, username, password) {

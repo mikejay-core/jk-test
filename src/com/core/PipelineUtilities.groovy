@@ -129,4 +129,8 @@ class PipelineUtilities implements Serializable {
         Helper.pushLatestTag(env, this.context, this.imageExists, this.dockerTag, this.registryPrefix, this.repoName)
     }
 
+    def deleteImage(){
+        Helper.deleteImageFromECF(this.context, this.repoName, this.dockerTag) 
+    }
+
 }
