@@ -38,7 +38,7 @@ class Helper implements Serializable {
     }
 
     static def logInToECR(context) {
-        runScript(context,"$(aws ecr get-login --no-include-email --region eu-west-1)")
+        runScript(context,'$(aws ecr get-login --no-include-email --region eu-west-1)')
     }
 
     static def deleteImageFromECF(context) {
