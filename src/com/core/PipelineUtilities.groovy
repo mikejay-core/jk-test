@@ -114,7 +114,7 @@ class PipelineUtilities implements Serializable {
     }
 
     def runQATests(env, qaTestSet, targetBranch) {
-        this.context.echo "Checkout QA Tests"
+        this.context.echo "Checkout QA Tests with branch ${targetBranch}"
         this.context.checkout([$class: 'GitSCM', branches: [[name: "${targetBranch}"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', url: 'https://github.com/nexmoinc/qatests']]])
         Helper.runScript(this.context, Helper.getQAShellScript(this.context, qaTestSet, npe.name))
     }

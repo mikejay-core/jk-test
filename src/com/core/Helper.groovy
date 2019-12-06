@@ -14,6 +14,7 @@ class Helper implements Serializable {
     }
 
     static def getQAShellScript(context, qaTestSet, npeName){
+        context.echo "about to run test"
         return """\
                     set -e && 
                     echo "Create python virtual env" &&
@@ -60,6 +61,7 @@ class Helper implements Serializable {
                 result = testBranch // use manually provided qatests branch
             }
         }
+        this.context.echo "using branch ${result}"
         return result
     }
 
