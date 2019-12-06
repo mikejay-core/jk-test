@@ -130,7 +130,7 @@ class PipelineUtilities implements Serializable {
     }
 
     def deleteImage(){
-        Helper.deleteImageFromECF(this.context, this.repoName, this.dockerTag) 
+        Helper.deleteImageFromECR(this.context, this.repoName, this.dockerTag) 
     }
 
 }
