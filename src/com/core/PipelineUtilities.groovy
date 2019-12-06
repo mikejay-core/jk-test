@@ -125,7 +125,7 @@ class PipelineUtilities implements Serializable {
         this.context.echo "${resp}"
     }
 
-    def pushLatestTag(){
+    def pushLatestTagToECR(){
         Helper.pushLatestTag(this.context, this.imageExists, this.dockerTag, this.registryPrefix, this.repoName)
     }
 
