@@ -32,7 +32,7 @@ class Helper implements Serializable {
         if (env.GIT_BRANCH == "master" && !imageExists) {
             logInToECR(context)
             def dockerId = runScript(context, "docker images | grep ${dockerTag} | awk {'print \$3'}").trim()
-            runScript("docker tag ${dockerId} ${RegistryPrefix}/${repoName}:latest")
+            runScript("docker tag ${dockerId} ${registryPrefix}/${repoName}:latest")
             runScript("docker push ${registryPrefix}/${repoName}:latest")
         }
     }
