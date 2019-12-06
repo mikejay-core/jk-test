@@ -48,7 +48,7 @@ class Helper implements Serializable {
 
     static def runSonarScanner(context) {
         def script = "/var/lib/jenkins/tools/hudson.plugins.sonar.SonarRunnerInstallation/sonar_scanner/bin/sonar-scanner " +
-                    "-Dsonar.projectVersion=${context.GIT_COMMIT_SHORT} -Dsonar.branch.name=${context.GIT_BRANCH}"
+                    "-Dsonar.projectVersion=${context.GIT_COMMIT} -Dsonar.branch.name=${context.GIT_BRANCH}"
         if(context.GIT_BRANCH != "master"){
             script +=  " -Dsonar.branch.target='master'"
         }
