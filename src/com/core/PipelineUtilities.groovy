@@ -76,15 +76,16 @@ class PipelineUtilities implements Serializable {
             imageAlreadyExists = "true"
         } catch (Exception inf) {
             Helper.runScript(this.context, "docker push ${registryPrefix}/${repoName}:${dockerTag}")
+            Helper.runScript(this.context, "docker rmi -f ${registryPrefix}/${repoName}:${dockerTag}")
         }
     }
 
     def retrieveConfiguration(env, npePreset, instanceId) {
-        //def npePreset = service_location.split('-')[0]
+        def projectName = service_location.split('-')[1]
         npe.params = this.context.readJSON text: Helper.runScript(this.context, "curl -ks \"https://api.app.npe/presets/${npePreset}/default-params\"").trim()
         npe.params.param["env.puppet_branch"] = puppetBranch
         npe.params.param["metaconf.docker_tag"] = dockerTag
-        npe.params.param["metaconf.project_name"] = repoName
+        npe.params.param["metaconf.project_name"] = projectName
         npe.params.param["metaconf.project_branch"] = "master"
         npe.params.param["env.core_instance_id"] = instanceId
         npe.params.param["env.core_config_db_db_url"] = "jdbc:mysql://mysql-db/config"
@@ -112,11 +113,11 @@ class PipelineUtilities implements Serializable {
         }
     }
 
-    def runQATests(env, qa_test_set, npe_short_name) {
+    def runQATests(env, qa_test_set) {
         String target_branch = "master" //Helper.getQATestsBranch(env, this.context, qa_test_set, username, password) //TODO
         this.context.echo "Checkout QA Tests"
         this.context.checkout([$class: 'GitSCM', branches: [[name: "${target_branch}"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', url: 'https://github.com/nexmoinc/qatests']]])
-        Helper.runScript(this.context, Helper.getQAShellScript(this.context, qa_test_set, npe.name, npe_short_name))
+        Helper.runScript(this.context, Helper.getQAShellScript(this.context, qa_test_set, npe.name))
     }
 
     def dropNPE(env, npe_key, npe_user) {
