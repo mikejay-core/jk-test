@@ -30,19 +30,19 @@ class Helper implements Serializable {
 
     static def pushLatestTagToECR(env, context, imageExists, dockerTag, registryPrefix, repoName) {
         if (env.GIT_BRANCH == "master" && !imageExists) {
-            loginToECR(context)
+            logInToECR(context)
             DOCKER_ID = runScript(context, "docker images | grep ${dockerTag} | awk {'print \$3'}").trim()
             runScript("docker tag ${DOCKER_ID} ${RegistryPrefix}/${repoName}:latest")
             runScript("docker push ${registryPrefix}/${repoName}:latest")
         }
     }
 
-    static def loginToECR(context) {
-        loginToECR(context,"$(aws ecr get-login --no-include-email --region eu-west-1)")
+    static def logInToECR(context) {
+        runScript(context,"$(aws ecr get-login --no-include-email --region eu-west-1)")
     }
 
     static def deleteImageFromECF(context) {
-        loginToECR(context)
+        logInToECR(context)
         runScript(context, "aws ecr batch-delete-image --repository-name ${repo_name} --image-ids imageTag=${dockerTag}")
     }
 
