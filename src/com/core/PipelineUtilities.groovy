@@ -96,6 +96,7 @@ class PipelineUtilities implements Serializable {
         Object response = this.context.readJSON text: rawResponse
         npe.name = response.data[0].name
         this.context.echo "NPE Name: ${npe.name}"
+        return npe.name
     }
 
     def waitForNPEEnv(env, npeKey, npeUser) {

@@ -27,14 +27,14 @@ class Helper implements Serializable {
                 """
     }
 
-    def String getQATestsBranch(env, username, password) {
+    def String getQATestsBranch(env, testBranch, username, password) {
         this.context.echo "IN GET QA TESTS BRANCH"
         // helper function to find corresponding qatests branch to be used for testing dev branch
         def result = ""
         if (env.GIT_BRANCH.toLowerCase() == "dev" || env.GIT_BRANCH == "master") {
             result = "master" // if we are on dev branch, always run tests from qatests master
         } else {
-            if (params.QATESTS_BRANCH == "") {
+            if (testBranch == "") {
                 def (branchPrefix, filter1, filter2, qaTestsTargetBranch) = ["", "", "", ""]
                 if (env.GIT_BRANCH =~ /^\w+(-|_)\d+/) {
                     this.context.echo "dev branch has matched jira ticket name convention"
@@ -57,7 +57,7 @@ class Helper implements Serializable {
                 result = qaTestsTargetBranch
             } else {
                 this.context.echo "use provided parameter"
-                result = params.QATESTS_BRANCH // use manually provided qatests branch
+                result = testBranch // use manually provided qatests branch
             }
         }
         return result
