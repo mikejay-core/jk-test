@@ -83,46 +83,46 @@ class PipelineUtilities implements Serializable {
     def retrieveConfiguration(env, npePreset, instanceId) {
         def projectName = repoName.split('-')[1]
         npe.params = this.context.readJSON text: Helper.runScript(this.context, "curl -ks \"https://api.app.npe/presets/${npePreset}/default-params\"").trim()
-        npe.params.param["env.puppet_branch"] = puppetBranch
-        npe.params.param["metaconf.docker_tag"] = dockerTag
-        npe.params.param["metaconf.project_name"] = projectName
-        npe.params.param["metaconf.project_branch"] = "master"
-        npe.params.param["env.core_instance_id"] = instanceId
-        npe.params.param["env.core_config_db_db_url"] = "jdbc:mysql://mysql-db/config"
+        npe.params.with {
+            param["env.puppet_branch"] = puppetBranch
+            nparam["metaconf.docker_tag"] = dockerTag
+            param["metaconf.project_name"] = projectName
+            param["metaconf.project_branch"] = "master"
+            param["env.core_instance_id"] = instanceId
+            params.param["env.core_config_db_db_url"] = "jdbc:mysql://mysql-db/config"
+        }
     }
 
-    def buildNPE(env, npe_key, npe_user) {
-        String something = Helper.runScript(this.context, "curl -ks -H \"Content-Type: application/json\" -d '${groovy.json.JsonOutput.toJson(npe.params)}' -X POST \"https://${npe_user}:${npe_key}@api.app.npe/envs\"").trim()
-        Object response = this.context.readJSON text: something
+    def buildNPE(env, npeKey, npeUser) {
+        String rawResponse = Helper.runScript(this.context, "curl -ks -H \"Content-Type: application/json\" -d '${groovy.json.JsonOutput.toJson(npe.params)}' -X POST \"https://${npeUser}:${npeKey}@api.app.npe/envs\"").trim()
+        Object response = this.context.readJSON text: rawResponse
         npe.name = response.data[0].name
         this.context.echo "NPE Name: ${npe.name}"
     }
 
-    def waitForNPEEnv(env, npe_key, npe_user) {
-        this.context.echo "WAITING FOR NPE"
+    def waitForNPEEnv(env, npeKey, npeUser) {
         int attempts = 0
         while(attempts < 40){
-            Object response = this.context.readJSON text: Helper.runScript(this.context, "curl -ks \"https://${npe_user}:${npe_key}@api.app.npe/envs/${npe.name}/status\"").trim()
+            Object response = this.context.readJSON text: Helper.runScript(this.context, "curl -ks \"https://${npeUser}:${npeKey}@api.app.npe/envs/${npe.name}/status\"").trim()
             if (response.data[0].available != false) { 
                 return true
             } else {
-                sleep 30000
+                sleep 30000 //30 sec
             }
-            this.context.echo "ATTEMPTS ${attempts} : Available ${response.data[0].available}"
             attempts++
         }
+        return false
     }
 
-    def runQATests(env, qa_test_set) {
-        String target_branch = "master" //Helper.getQATestsBranch(env, this.context, qa_test_set, username, password) //TODO
+    def runQATests(env, qaTestSet, targetBranch) {
         this.context.echo "Checkout QA Tests"
-        this.context.checkout([$class: 'GitSCM', branches: [[name: "${target_branch}"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', url: 'https://github.com/nexmoinc/qatests']]])
-        Helper.runScript(this.context, Helper.getQAShellScript(this.context, qa_test_set, npe.name))
+        this.context.checkout([$class: 'GitSCM', branches: [[name: "${targetBranch}"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', url: 'https://github.com/nexmoinc/qatests']]])
+        Helper.runScript(this.context, Helper.getQAShellScript(this.context, qaTestSet, npe.name))
     }
 
-    def dropNPE(env, npe_key, npe_user) {
+    def dropNPE(env, npeKey, npeUser) {
         this.context.echo "Deleting environment ${npe.name}"
-        def resp = Helper.runScript(this.context, "curl -ks -X DELETE \"https://${npe_user}:${npe_key}@api.app.npe/envs/${npe.name}\"")
+        def resp = Helper.runScript(this.context, "curl -ks -X DELETE \"https://${npeUser}:${npeKey}@api.app.npe/envs/${npe.name}\"")
         this.context.echo "${resp}"
     }
 

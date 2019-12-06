@@ -13,59 +13,55 @@ class Helper implements Serializable {
         return result
     }
 
-    static def getQAShellScript(context, qa_test_set, npe_name){
+    static def getQAShellScript(context, qaTestSet, npeName){
         return """\
                     set -e && 
                     echo "Create python virtual env" &&
                     pipenv install --ignore-pipfile && 
                     pipenv install allure-pytest pytest-rerunfailures --skip-lock &&
                     echo "Run tests" &&
-                    export QA_TEST_ENVIRONMENT=npe:core:${npe_name}:core1 && export PYTHONPATH=\$PYTHONPATH:\$(pwd) &&
-                    pipenv run python -m pytest testcases/core_projects/auth -v -m "trusted and not skip and ${qa_test_set}" --junitxml=${context.WORKSPACE}/pytestresults.xml --alluredir=${context.WORKSPACE}/allure-results --reruns=1 &&
+                    export QA_TEST_ENVIRONMENT=npe:core:${npeName}:core1 && export PYTHONPATH=\$PYTHONPATH:\$(pwd) &&
+                    pipenv run python -m pytest testcases/core_projects/auth -v -m "trusted and not skip and ${qaTestSet}" --junitxml=${context.WORKSPACE}/pytestresults.xml --alluredir=${context.WORKSPACE}/allure-results --reruns=1 &&
                     echo "Delete virtual env" &&
                     pipenv --rm
                 """
     }
 
-    static def String getQATestsBranch(env, context, qa_tests_branch, username, password) {
-        node('master') {
-            // helper function to find corresponding qatests branch to be used for testing dev branch
-            def result = ""
-            context.withCredentials([usernamePassword(credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', passwordVariable: 'password', usernameVariable: 'username')]) { //TODO
-                script {
-                    if (env.GIT_BRANCH.toLowerCase() == "dev" || env.GIT_BRANCH == "master") {
-                        result = "master" // if we are on dev branch, always run tests from qatests master
-                    } else {
-                        if (qa_tests_branch == "") {
-                            def (branch_prefix, filter1, filter2, qatests_target_branch) = ["", "", "", ""]
-                            if (env.GIT_BRANCH =~ /^\w+(-|_)\d+/) {
-                                context.echo "dev branch has matched jira ticket name convention"
-                                branch_prefix = (env.GIT_BRANCH =~ /^\w+(-|_)\d+/)[0][0] // we have to use same regexp twice because we can't use match object in declarative pipelines because of serialization
-                                filter1 = branch_prefix
-                                filter2 = branch_prefix.contains('-') ? branch_prefix.replace('-', '_') : branch_prefix.replace('_', '-') // test branch can be CORE-xxxx or CORE_xxxx
-                            } else {
-                                context.echo "dev branch has not matched jira ticket name convention"
-                                branch_prefix = env.GIT_BRANCH
-                                (filter1, filter2) = [branch_prefix, branch_prefix]
-                            }
-                            def branch_qa_hash = runScript(context, "git ls-remote https://${username}:${password}@github.com/nexmoinc/qatests.git | grep \"$filter1\\|$filter2\" || echo 'switch to qatests master'").toString().trim()
-                            if (branch_qa_hash == "switch to qatests master") {
-                                context.echo "No corresponding qatests branch found -> using master"
-                                qatests_target_branch = "master"
-                            } else {
-                                context.echo "found qatests branch ${branch_qa_hash}"
-                                qatests_target_branch = branch_qa_hash.split()[1] // first element is hashcommit, second is branch name we need
-                            }
-                            result = qatests_target_branch
+    static def String getQATestsBranch(env, username, password) {
+        // helper function to find corresponding qatests branch to be used for testing dev branch
+        def result = ""
+            script {
+                if (env.GIT_BRANCH.toLowerCase() == "dev" || env.GIT_BRANCH == "master") {
+                    result = "master" // if we are on dev branch, always run tests from qatests master
+                } else {
+                    if (params.QATESTS_BRANCH == "") {
+                        def (branchPrefix, filter1, filter2, qaTestsTargetBranch) = ["", "", "", ""]
+                        if (env.GIT_BRANCH =~ /^\w+(-|_)\d+/) {
+                            context.echo "dev branch has matched jira ticket name convention"
+                            branchPrefix = (env.GIT_BRANCH =~ /^\w+(-|_)\d+/)[0][0] // we have to use same regexp twice because we can't use match object in declarative pipelines because of serialization
+                            filter1 = branchPrefix
+                            filter2 = branchPrefix.contains('-') ? branchPrefix.replace('-', '_') : branchPrefix.replace('_', '-') // test branch can be CORE-xxxx or CORE_xxxx
                         } else {
-                            context.echo "use provided parameter"
-                            result = qa_tests_branch // use manually provided qatests branch
+                            context.echo "dev branch has not matched jira ticket name convention"
+                            branchPrefix = env.GIT_BRANCH
+                            (filter1, filter2) = [branchPrefix, branchPrefix]
                         }
+                        def branchQAHash = runScript(context, "git ls-remote https://${username}:${password}@github.com/nexmoinc/qatests.git | grep \"$filter1\\|$filter2\" || echo 'switch to qatests master'").toString().trim()
+                        if (branchQAHash == "switch to qatests master") {
+                            context.echo "No corresponding qatests branch found -> using master"
+                            qaTestsTargetBranch = "master"
+                        } else {
+                            context.echo "found qatests branch ${branchQAHash}"
+                            qaTestsTargetBranch = branchQAHash.split()[1] // first element is hashcommit, second is branch name we need
+                        }
+                        result = qaTestsTargetBranch
+                    } else {
+                        context.echo "use provided parameter"
+                        result = params.QATESTS_BRANCH // use manually provided qatests branch
                     }
                 }
             }
-            return result
-        }
+        return result
     }
 
     def runScript(script) {
@@ -85,21 +81,21 @@ class Helper implements Serializable {
         }
     }
 
-    def publishUnitTest(env, report_dir) {
+    def publishUnitTest(env, reportDir) {
         this.context.publishHTML([allowMissing: true,
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
-                    reportDir: report_dir,
+                    reportDir: reportDir,
                     reportFiles: 'index.html',
                     reportName: 'Unit Test Coverage',
                     reportTitles: 'Unit Test Coverage'])
     }
 
-    def publishIntegrationTest(env, report_dir) {
+    def publishIntegrationTest(env, reportDir) {
         this.context.publishHTML([allowMissing: true,
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
-                    reportDir: report_dir,
+                    reportDir: reportDir,
                     reportFiles: 'index.html',
                     reportName: 'Integration Test Coverage',
                     reportTitles: 'Integration Test Coverage'])
