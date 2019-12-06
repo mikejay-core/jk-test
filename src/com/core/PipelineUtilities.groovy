@@ -81,7 +81,7 @@ class PipelineUtilities implements Serializable {
     }
 
     def retrieveConfiguration(env, npePreset, instanceId) {
-        def projectName = service_location.split('-')[1]
+        def projectName = repoName.split('-')[1]
         npe.params = this.context.readJSON text: Helper.runScript(this.context, "curl -ks \"https://api.app.npe/presets/${npePreset}/default-params\"").trim()
         npe.params.param["env.puppet_branch"] = puppetBranch
         npe.params.param["metaconf.docker_tag"] = dockerTag
