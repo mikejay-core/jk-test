@@ -35,7 +35,7 @@ class Helper implements Serializable {
         if (env.GIT_BRANCH.toLowerCase() == "dev" || env.GIT_BRANCH == "master") {
             result = "master" // if we are on dev branch, always run tests from qatests master
         } else {
-            if (testBranch == "") {
+            if (testBranch == "" || testBranch == null) {
                 def (branchPrefix, filter1, filter2, qaTestsTargetBranch) = ["", "", "", ""]
                 if (env.GIT_BRANCH =~ /^\w+(-|_)\d+/) {
                     this.context.echo "dev branch has matched jira ticket name convention"
