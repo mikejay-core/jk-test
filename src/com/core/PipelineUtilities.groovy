@@ -18,29 +18,29 @@ class PipelineUtilities implements Serializable {
         this.puppetBranch = puppetBranch
     }
 
-    def String buildAndUnitTest(env) {
+    def String buildAndUnitTest() {
         this.context.echo "Build and Unit Test"
         Helper.runScript(this.context, "./gradlew clean --no-daemon check jacocoTestReportUnit")
-        return Helper.runScript(this.context, "git log -n 1 --pretty=format:%s ${env.GIT_COMMIT}")
+        return Helper.runScript(this.context, "git log -n 1 --pretty=format:%s ${this.context.GIT_COMMIT}")
     }
 
-    def String runIntegrationTests(env) {
+    def String runIntegrationTests() {
         this.context.echo "Run Integration Tests"
         Helper.runScript(this.context, "./gradlew integrationTest --no-daemon --info jacocoTestReportIntegration")
-        Helper.runScript(this.context, "git log -n 1 --pretty=format:%s ${env.GIT_COMMIT}")
+        Helper.runScript(this.context, "git log -n 1 --pretty=format:%s ${this.context.GIT_COMMIT}")
     }
 
-    def createPackage(env, service_location, legacy) {
+    def createPackage(service_location, legacy) {
         this.context.echo "Create Package"
-        def gitHash = Helper.runScript(this.context, "git rev-parse --short ${env.GIT_COMMIT}").trim()
+        def gitHash = Helper.runScript(this.context, "git rev-parse --short ${this.context.GIT_COMMIT}").trim()
         if(legacy){
-            createLegacyPackage(env, service_location, gitHash)
+            createLegacyPackage(service_location, gitHash)
             return
         }
-        Helper.runScript(this.context, "cd ${service_location} && ./package.sh -b ${env.GIT_BRANCH} -c ${gitHash}")
+        Helper.runScript(this.context, "cd ${service_location} && ./package.sh -b ${this.context.GIT_BRANCH} -c ${gitHash}")
     }
 
-    def createLegacyPackage(env, service_location, gitHash) {
+    def createLegacyPackage(service_location, gitHash) {
         this.context.echo "Create Legacy Package"
         def files = this.context.findFiles(glob: "${service_location}/config/qa.properties")
         def exists = files.length > 0 && files[0].length > 0
@@ -48,17 +48,17 @@ class PipelineUtilities implements Serializable {
         if (exists) {
             REPLACE_FILE = "config/qa.properties"
         }
-        Helper.runScript(this.context, "cd auth-service && ./package.sh -b ${env.GIT_BRANCH} -c ${gitHash} -r ${REPLACE_FILE}")
-        env.gitHash = gitHash
+        Helper.runScript(this.context, "cd auth-service && ./package.sh -b ${this.context.GIT_BRANCH} -c ${gitHash} -r ${REPLACE_FILE}")
+        this.context.gitHash = gitHash
     }
 
-    def buildDockerImage(env, service_location) {
+    def buildDockerImage(service_location) {
         def service_prefix = service_location.split('-')[0]
-        def escapedBranchName = env.GIT_BRANCH.replaceAll("_", "-")
-        dockerTag = escapedBranchName + "-" + env.gitHash
+        def escapedBranchName = this.context.GIT_BRANCH.replaceAll("_", "-")
+        dockerTag = escapedBranchName + "-" + this.context.gitHash
         this.context.echo "Docker tag = |${dockerTag}|"
         Helper.runScript(this.context, '$(aws ecr get-login --no-include-email --region eu-west-1)')
-        def files = this.context.findFiles(glob: "${service_location}/build/distributions/nexmo-${service_prefix}_*+" + escapedBranchName + '+' + env.gitHash + '-1_all.deb')
+        def files = this.context.findFiles(glob: "${service_location}/build/distributions/nexmo-${service_prefix}_*+" + escapedBranchName + '+' + this.context.gitHash + '-1_all.deb')
         def localPath = ""
         if (files.length > 0) {
             //set some variable to indicate the file to load
@@ -80,7 +80,7 @@ class PipelineUtilities implements Serializable {
         }
     }
 
-    def retrieveConfiguration(env, npePreset) {
+    def retrieveConfiguration(npePreset) {
         def projectName = repoName.split('-')[1]
         npe.params = this.context.readJSON text: Helper.runScript(this.context, "curl -ks \"https://api.app.npe/presets/${npePreset}/default-params\"").trim()
         npe.params.param["env.puppet_branch"] = puppetBranch
@@ -91,7 +91,7 @@ class PipelineUtilities implements Serializable {
         npe.params.param["env.core_config_db_db_url"] = "jdbc:mysql://mysql-db/config"
     }
 
-    def buildNPE(env, npeKey, npeUser) {
+    def buildNPE(npeKey, npeUser) {
         String rawResponse = Helper.runScript(this.context, "curl -ks -H \"Content-Type: application/json\" -d '${groovy.json.JsonOutput.toJson(npe.params)}' -X POST \"https://${npeUser}:${npeKey}@api.app.npe/envs\"").trim()
         Object response = this.context.readJSON text: rawResponse
         npe.name = response.data[0].name
@@ -99,7 +99,7 @@ class PipelineUtilities implements Serializable {
         return npe.name
     }
 
-    def waitForNPEEnv(env, npeKey, npeUser) {
+    def waitForNPEEnv(npeKey, npeUser) {
         int attempts = 0
         while(attempts < 40){
             Object response = this.context.readJSON text: Helper.runScript(this.context, "curl -ks \"https://${npeUser}:${npeKey}@api.app.npe/envs/${npe.name}/status\"").trim()
@@ -113,20 +113,20 @@ class PipelineUtilities implements Serializable {
         return false
     }
 
-    def runQATests(env, qaTestSet, targetBranch) {
+    def runQATests(qaTestSet, targetBranch) {
         this.context.echo "Checkout QA Tests with branch ${targetBranch}"
         this.context.checkout([$class: 'GitSCM', branches: [[name: "${targetBranch}"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', url: 'https://github.com/nexmoinc/qatests']]])
         Helper.runScript(this.context, Helper.getQAShellScript(this.context, qaTestSet, npe.name))
     }
 
-    def dropNPE(env, npeKey, npeUser) {
+    def dropNPE(npeKey, npeUser) {
         this.context.echo "Deleting environment ${npe.name}"
         def resp = Helper.runScript(this.context, "curl -ks -X DELETE \"https://${npeUser}:${npeKey}@api.app.npe/envs/${npe.name}\"")
         this.context.echo "${resp}"
     }
 
-    def pushLatestTag(env){
-        Helper.pushLatestTag(env, this.context, this.imageExists, this.dockerTag, this.registryPrefix, this.repoName)
+    def pushLatestTag(){
+        Helper.pushLatestTag(this.context, this.imageExists, this.dockerTag, this.registryPrefix, this.repoName)
     }
 
     def deleteImage(){

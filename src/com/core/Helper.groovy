@@ -28,8 +28,8 @@ class Helper implements Serializable {
                 """
     }
 
-    static def pushLatestTagToECR(env, context, imageExists, dockerTag, registryPrefix, repoName) {
-        if (env.GIT_BRANCH == "master" && !imageExists) {
+    static def pushLatestTagToECR(context, imageExists, dockerTag, registryPrefix, repoName) {
+        if (context.GIT_BRANCH == "master" && !imageExists) {
             logInToECR(context)
             def dockerId = runScript(context, "docker images | grep ${dockerTag} | awk {'print \$3'}").trim()
             runScript("docker tag ${dockerId} ${registryPrefix}/${repoName}:latest")
@@ -46,23 +46,32 @@ class Helper implements Serializable {
         runScript(context, "aws ecr batch-delete-image --repository-name ${repoName} --image-ids imageTag=${dockerTag}")
     }
 
-    def String getQATestsBranch(env, testBranch, username, password) {
+    static def runSonarScanner(context, branch) {
+        def script = "/var/lib/jenkins/tools/hudson.plugins.sonar.SonarRunnerInstallation/sonar_scanner/bin/sonar-scanner " +
+                    "-Dsonar.projectVersion=${context.GIT_COMMIT_SHORT} -Dsonar.branch.name=${context.GIT_BRANCH}"
+        if(branch != "master"){
+            script +=  " -Dsonar.branch.target='master'"
+        }
+        runScript(context, script) 
+    }
+
+    def String getQATestsBranch(testBranch, username, password) {
         this.context.echo "IN GET QA TESTS BRANCH"
         // helper function to find corresponding qatests branch to be used for testing dev branch
         def result = ""
-        if (env.GIT_BRANCH.toLowerCase() == "dev" || env.GIT_BRANCH == "master") {
+        if (this.context.GIT_BRANCH.toLowerCase() == "dev" || this.context.GIT_BRANCH == "master") {
             result = "master" // if we are on dev branch, always run tests from qatests master
         } else {
             if (testBranch == "" || testBranch == null) {
                 def (branchPrefix, filter1, filter2, qaTestsTargetBranch) = ["", "", "", ""]
-                if (env.GIT_BRANCH =~ /^\w+(-|_)\d+/) {
+                if (this.context.GIT_BRANCH =~ /^\w+(-|_)\d+/) {
                     this.context.echo "dev branch has matched jira ticket name convention"
-                    branchPrefix = (env.GIT_BRANCH =~ /^\w+(-|_)\d+/)[0][0] // we have to use same regexp twice because we can't use match object in declarative pipelines because of serialization
+                    branchPrefix = (this.context.GIT_BRANCH =~ /^\w+(-|_)\d+/)[0][0] // we have to use same regexp twice because we can't use match object in declarative pipelines because of serialization
                     filter1 = branchPrefix
                     filter2 = branchPrefix.contains('-') ? branchPrefix.replace('-', '_') : branchPrefix.replace('_', '-') // test branch can be CORE-xxxx or CORE_xxxx
                 } else {
                     this.context.echo "dev branch has not matched jira ticket name convention"
-                    branchPrefix = env.GIT_BRANCH
+                    branchPrefix = this.context.GIT_BRANCH
                     (filter1, filter2) = [branchPrefix, branchPrefix]
                 }
                 def branchQAHash = runScript("git ls-remote https://${username}:${password}@github.com/nexmoinc/qatests.git | grep \"$filter1\\|$filter2\" || echo 'switch to qatests master'").toString().trim()
@@ -90,8 +99,8 @@ class Helper implements Serializable {
         return result
     }
 
-    def push_latest_tag(env, repositoryPrefix, repoName, dockerTag) {
-        if (env.GIT_BRANCH == "master" && imageExists) {
+    def push_latest_tag(repositoryPrefix, repoName, dockerTag) {
+        if (this.context.GIT_BRANCH == "master" && imageExists) {
             this.context.echo("Pushing latest tag")
             runScript('$(aws ecr get-login --no-include-email --region eu-west-1)')
             def dockerId = runScript("docker images | grep ${dockerTag} | awk {'print \$3'}").trim()
@@ -100,7 +109,7 @@ class Helper implements Serializable {
         }
     }
 
-    def publishUnitTest(env, reportDir) {
+    def publishUnitTest(reportDir) {
         this.context.publishHTML([allowMissing: true,
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
@@ -110,7 +119,7 @@ class Helper implements Serializable {
                     reportTitles: 'Unit Test Coverage'])
     }
 
-    def publishIntegrationTest(env, reportDir) {
+    def publishIntegrationTest(reportDir) {
         this.context.publishHTML([allowMissing: true,
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
@@ -120,7 +129,7 @@ class Helper implements Serializable {
                     reportTitles: 'Integration Test Coverage'])
     }
 
-    def publishQATestResults(env) {
+    def publishQATestResults() {
         String cmd = """\
                         set +e 
                         [ -d \"allure-report/history\" ] && cp -r allure-report/history allure-results 
@@ -136,8 +145,8 @@ class Helper implements Serializable {
                         ])
     }
 
-    def slackSend(env, _channel, _color, _status) {
-        this.context.slackSend channel: "${_channel}", color: "${_color}", message: "Build ${_status} - job: ${env.JOB_NAME} build number: ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+    def slackSend(_channel, _color, _status) {
+        this.context.slackSend channel: "${_channel}", color: "${_color}", message: "Build ${_status} - job: ${this.context.JOB_NAME} build number: ${this.context.BUILD_NUMBER} (<${this.context.BUILD_URL}|Open>)"
     }
 
 }
