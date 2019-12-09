@@ -13,7 +13,7 @@ class Helper implements Serializable {
         return result
     }
 
-    static def getQAShellScript(context, qaTestSet, npeName, testSetLocation){
+    static def getQAShellScript(context, qaTestSet, npeName, repoLocation){
         context.echo "about to run test"
         return """\
                     set -e && 
@@ -22,7 +22,7 @@ class Helper implements Serializable {
                     pipenv install allure-pytest pytest-rerunfailures --skip-lock &&
                     echo "Run tests" &&
                     export QA_TEST_ENVIRONMENT=npe:core:${npeName}:core1 && export PYTHONPATH=\$PYTHONPATH:\$(pwd) &&
-                    pipenv run python -m pytest ${testSetLocation} -v -m "trusted and not skip and ${qaTestSet}" --junitxml=${context.WORKSPACE}/pytestresults.xml --alluredir=${context.WORKSPACE}/allure-results --reruns=1 &&
+                    pipenv run python -m pytest ${repoLocation} -v -m "trusted and not skip and ${qaTestSet}" --junitxml=${context.WORKSPACE}/pytestresults.xml --alluredir=${context.WORKSPACE}/allure-results --reruns=1 &&
                     echo "Delete virtual env" &&
                     pipenv --rm
                 """

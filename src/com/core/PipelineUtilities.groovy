@@ -65,7 +65,7 @@ class PipelineUtilities implements Serializable {
             localPath = files[0].path
         }
         this.context.echo "Checkout shared repo"
-        this.context.checkout([$class: 'GitSCM', branches: [[name: this.context.GIT_BRANCH]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', url: 'https://github.com/nexmoinc/core-innovation']]])
+        this.context.checkout([$class: 'GitSCM', branches: [[name: "master"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', url: 'https://github.com/nexmoinc/core-ci']]])
 
         this.context.echo "Build Docker Image"
         Helper.runScript(this.context, "docker build -f Dockerfile --no-cache --network=host --build-arg service_name=${service_prefix} --build-arg local_deb_path=${localPath} -t ${registryPrefix}/${repoName}:${dockerTag} .")
@@ -113,10 +113,10 @@ class PipelineUtilities implements Serializable {
         return false
     }
 
-    def runQATests(qaTestSet, targetBranch, testLocation) {
+    def runQATests(qaTestSet, targetBranch, relativeLocation) {
         this.context.echo "Checkout QA Tests with branch ${targetBranch}"
         this.context.checkout([$class: 'GitSCM', branches: [[name: "${targetBranch}"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'cfb2df52-09d4-4f27-ad17-71a58c4995d9', url: 'https://github.com/nexmoinc/qatests']]])
-        Helper.runScript(this.context, Helper.getQAShellScript(this.context, qaTestSet, npe.name, "testcases/core_projects/" + testLocation))
+        Helper.runScript(this.context, Helper.getQAShellScript(this.context, qaTestSet, npe.name, "testcases/core_projects/${relativeLocation}"))
     }
 
     def dropNPE(npeKey, npeUser) {
