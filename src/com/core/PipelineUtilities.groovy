@@ -46,9 +46,9 @@ class PipelineUtilities implements Serializable {
         def exists = files.length > 0 && files[0].length > 0
         def REPLACE_FILE = ""
         if (exists) {
-            REPLACE_FILE = "config/qa.properties"
+            REPLACE_FILE = "-r config/qa.properties"
         }
-        Helper.runScript(this.context, "cd ${service_location} && ./package.sh -b ${this.context.GIT_BRANCH} -c ${gitHash} -r ${REPLACE_FILE}")
+        Helper.runScript(this.context, "cd ${service_location} && ./package.sh -b ${this.context.GIT_BRANCH} -c ${gitHash} ${REPLACE_FILE}")
         this.context.gitHash = gitHash
     }
 
